@@ -1,0 +1,41 @@
+---
+# Production Checkov Configuration File
+# Documentation: https://www.checkov.io/2.Basics/Configuring%20Checkov.html
+
+# Target directory to scan
+directory:
+  - ./terraform/remediated
+
+# Frameworks to evaluate
+framework:
+  - terraform
+
+# Output formatting options
+output:
+  - cli
+  - json
+  - sarif
+
+# Output file path prefix
+output-file-path: ./reports
+
+# Enable external / custom policies
+external-checks-dir:
+  - ./custom_policies/yaml
+  - ./custom_policies/python
+
+# Fail build only on HIGH or CRITICAL severity issues
+hard-fail-on:
+  - HIGH
+  - CRITICAL
+
+# Soft fail flag (if true, will exit with 0 code even on failures)
+soft-fail: false
+
+# Evaluate variables and dynamic modules
+evaluate-variables: true
+download-external-modules: false
+
+# Compact output to reduce terminal clutter
+compact: true
+quiet: false

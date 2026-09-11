@@ -1,0 +1,25 @@
+terraform scan results:
+
+Passed checks: 5, Failed checks: 0, Skipped checks: 0
+
+Check: CUSTOM_AWS_004: "Ensure S3 server side encryption uses Customer Managed Key (CMK) ARN"
+	PASSED for resource: aws_s3_bucket_server_side_encryption_configuration.access_logs_sse
+	File: \s3.tf:42-52
+Check: CUSTOM_AWS_004: "Ensure S3 server side encryption uses Customer Managed Key (CMK) ARN"
+	PASSED for resource: aws_s3_bucket_server_side_encryption_configuration.secure_data_sse
+	File: \s3.tf:130-140
+Check: CUSTOM_AWS_001: "Ensure all S3 buckets have required organizational tags (Environment, Project)"
+	PASSED for resource: aws_s3_bucket.access_logs_bucket
+	Severity: MEDIUM
+	File: \s3.tf:20-33
+	Guide: All S3 buckets must be tagged with Environment (dev, stage, production) and Project name for cost allocation and governance.
+Check: CUSTOM_AWS_001: "Ensure all S3 buckets have required organizational tags (Environment, Project)"
+	PASSED for resource: aws_s3_bucket.secure_data_bucket
+	Severity: MEDIUM
+	File: \s3.tf:108-119
+	Guide: All S3 buckets must be tagged with Environment (dev, stage, production) and Project name for cost allocation and governance.
+Check: CUSTOM_AWS_002: "Ensure RDS backup retention period is configured for at least 7 days"
+	PASSED for resource: aws_db_instance.secure_postgres
+	Severity: HIGH
+	File: \rds.tf:79-126
+	Guide: All RDS instances must retain automated backups for at least 7 days to satisfy business continuity SLAs.

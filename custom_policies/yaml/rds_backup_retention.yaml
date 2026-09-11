@@ -1,0 +1,17 @@
+metadata:
+  name: "Ensure RDS backup retention period is configured for at least 7 days"
+  id: "CUSTOM_AWS_002"
+  category: "BACKUP_AND_RECOVERY"
+  guideline: "All RDS instances must retain automated backups for at least 7 days to satisfy business continuity SLAs."
+  severity: "HIGH"
+
+scope:
+  provider: "aws"
+
+definition:
+  cond_type: "attribute"
+  resource_types:
+    - "aws_db_instance"
+  attribute: "backup_retention_period"
+  operator: "greater_than_or_equal"
+  value: 7

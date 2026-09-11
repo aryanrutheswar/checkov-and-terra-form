@@ -1,0 +1,26 @@
+# Pre-commit configuration for local IaC static security scanning
+# Install pre-commit: pip install pre-commit
+# Install hooks: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_checkov
+        name: Checkov IaC Security Scanner
+        args:
+          - --args=--config-file .checkov.yml
+          - --args=--framework terraform
+          - --args=--compact
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: detect-private-key

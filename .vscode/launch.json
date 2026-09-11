@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PowerShell: Run Scan Suite (All)",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/scripts/run_scans.ps1",
+      "args": ["-Target", "all"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Run Scan Suite (Remediated)",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/scripts/run_scans.ps1",
+      "args": ["-Target", "remediated", "-Severity", "HIGH"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "PowerShell: Launch Current File",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${file}",
+      "cwd": "${fileDirname}"
+    }
+  ]
+}

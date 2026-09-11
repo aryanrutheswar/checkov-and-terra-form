@@ -1,0 +1,26 @@
+metadata:
+  name: "Ensure all S3 buckets have required organizational tags (Environment, Project)"
+  id: "CUSTOM_AWS_001"
+  category: "GENERAL_SECURITY"
+  guideline: "All S3 buckets must be tagged with Environment (dev, stage, production) and Project name for cost allocation and governance."
+  severity: "MEDIUM"
+
+scope:
+  provider: "aws"
+
+definition:
+  and:
+    - cond_type: "attribute"
+      resource_types:
+        - "aws_s3_bucket"
+      attribute: "tags.Environment"
+      operator: "within"
+      value:
+        - "dev"
+        - "stage"
+        - "production"
+    - cond_type: "attribute"
+      resource_types:
+        - "aws_s3_bucket"
+      attribute: "tags.Project"
+      operator: "exists"
