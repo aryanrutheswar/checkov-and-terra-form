@@ -42,7 +42,7 @@ resource "aws_secretsmanager_secret" "db_credentials_secret" {
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials_version" {
-  secret_id     = aws_secretsmanager_secret.db_credentials_secret.id
+  secret_id = aws_secretsmanager_secret.db_credentials_secret.id
   secret_string = jsonencode({
     engine   = "postgres"
     host     = aws_db_instance.secure_postgres.address

@@ -67,6 +67,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_lifecycle" {
     id     = "expire-old-access-logs"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = 90
     }
@@ -89,7 +91,7 @@ resource "aws_s3_bucket_policy" "access_logs_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.access_logs_bucket.arn,
           "${aws_s3_bucket.access_logs_bucket.arn}/*"
         ]
@@ -162,6 +164,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "secure_data_lifecycle" {
     id     = "abort-incomplete-multipart-uploads"
     status = "Enabled"
 
+    filter {}
+
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -180,7 +184,7 @@ resource "aws_s3_bucket_policy" "enforce_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.secure_data_bucket.arn,
           "${aws_s3_bucket.secure_data_bucket.arn}/*"
         ]
@@ -358,6 +362,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "access_logs_replica_lifecycle"
     id     = "expire-old-access-logs-replica"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = 90
     }
@@ -380,7 +386,7 @@ resource "aws_s3_bucket_policy" "access_logs_replica_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.access_logs_replica.arn,
           "${aws_s3_bucket.access_logs_replica.arn}/*"
         ]
@@ -455,6 +461,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "secure_data_replica_lifecycle"
     id     = "abort-incomplete-multipart-uploads-replica"
     status = "Enabled"
 
+    filter {}
+
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -473,7 +481,7 @@ resource "aws_s3_bucket_policy" "secure_data_replica_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.secure_data_replica.arn,
           "${aws_s3_bucket.secure_data_replica.arn}/*"
         ]
