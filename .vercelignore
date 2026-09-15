@@ -1,8 +1,7 @@
-# Ignore backend and non-web assets from Vercel static build
-backend/
+# Ignore non-web assets from Vercel static build
 terraform/
 custom_policies/
 reports/
 scripts/
 *.tf
-*.py
+

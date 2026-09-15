@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "if [ -d \"website\" ]; then cd website && npm install && npm run build && mkdir -p ../dist && cp -r dist/* ../dist/ 2>/dev/null || true; else npm install && npm run build; fi",
-  "outputDirectory": "website/dist",
+  "buildCommand": "if [ -d \"website\" ]; then cd website && npm install && npm run build && mkdir -p ../dist && cp -r dist/* ../dist/ 2>/dev/null || true; elif [ -d \"../website\" ]; then cd ../website && npm install && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist/ 2>/dev/null || true; else npm install && npm run build; fi",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
