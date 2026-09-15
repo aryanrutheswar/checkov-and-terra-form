@@ -78,12 +78,12 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring_attach" {
 # Hardened RDS Database Instance
 resource "aws_db_instance" "secure_postgres" {
   # checkov:skip=CKV2_AWS_30:Query activity stream enabled at RDS cluster level
-  identifier        = "app-db-hardened-${var.environment}"
-  allocated_storage = 50
+  identifier            = "app-db-hardened-${var.environment}"
+  allocated_storage     = 50
   max_allocated_storage = 200 # Storage autoscaling
-  engine            = "postgres"
-  engine_version    = "15.3"
-  instance_class    = "db.t3.medium"
+  engine                = "postgres"
+  engine_version        = "15.3"
+  instance_class        = "db.t3.medium"
 
   # Network & Isolation
   db_subnet_group_name   = aws_db_subnet_group.private_db_subnets.name
@@ -100,14 +100,14 @@ resource "aws_db_instance" "secure_postgres" {
   kms_key_id        = aws_kms_key.data_encryption_key.arn
 
   # Backups & Maintenance
-  backup_retention_period   = 14   # 14 days backup (CKV_AWS_133)
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "sun:04:30-sun:05:30"
+  backup_retention_period    = 14 # 14 days backup (CKV_AWS_133)
+  backup_window              = "03:00-04:00"
+  maintenance_window         = "sun:04:30-sun:05:30"
   auto_minor_version_upgrade = true # Auto minor upgrades (CKV_AWS_226)
-  copy_tags_to_snapshot     = true # Retain tags on snapshot (CKV_AWS_129)
-  deletion_protection       = true # Protect against accidental deletion (CKV_AWS_157)
-  skip_final_snapshot       = false
-  final_snapshot_identifier = "app-db-hardened-final-snapshot"
+  copy_tags_to_snapshot      = true # Retain tags on snapshot (CKV_AWS_129)
+  deletion_protection        = true # Protect against accidental deletion (CKV_AWS_157)
+  skip_final_snapshot        = false
+  final_snapshot_identifier  = "app-db-hardened-final-snapshot"
 
   # IAM Token Authentication
   iam_database_authentication_enabled = true # IAM Auth (CKV_AWS_161)
@@ -120,7 +120,7 @@ resource "aws_db_instance" "secure_postgres" {
   performance_insights_kms_key_id = aws_kms_key.data_encryption_key.arn
 
   tags = {
-    Name = "app-db-hardened"
+    Name        = "app-db-hardened"
     Environment = var.environment
   }
 }
