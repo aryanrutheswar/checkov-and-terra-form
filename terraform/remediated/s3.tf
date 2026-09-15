@@ -90,7 +90,7 @@ resource "aws_s3_bucket_policy" "access_logs_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource = [
+        Resource  = [
           aws_s3_bucket.access_logs_bucket.arn,
           "${aws_s3_bucket.access_logs_bucket.arn}/*"
         ]
@@ -182,7 +182,7 @@ resource "aws_s3_bucket_policy" "enforce_tls_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource = [
+        Resource  = [
           aws_s3_bucket.secure_data_bucket.arn,
           "${aws_s3_bucket.secure_data_bucket.arn}/*"
         ]

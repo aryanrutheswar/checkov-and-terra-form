@@ -8,12 +8,8 @@ import {
   Copy, 
   Flame, 
   ShieldCheck, 
-  ShieldAlert, 
-  Layers, 
-  Terminal, 
-  ArrowRight,
-  Lock,
-  Cpu
+  ShieldAlert,
+  Lock
 } from 'lucide-react';
 
 export const PipelineVisualizer: React.FC = () => {

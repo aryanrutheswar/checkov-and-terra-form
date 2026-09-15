@@ -15,11 +15,9 @@ import {
   Trash2, 
   Sparkles,
   Columns,
-  Maximize2,
-  FileCode,
   Edit3
 } from 'lucide-react';
-import { SCAN_METRICS, INFRASTRUCTURE_FILES } from '../data/securityData';
+import { INFRASTRUCTURE_FILES } from '../data/securityData';
 import { NormalizedScanResult } from '../services/api';
 
 interface IacScannerProps {

@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
-import { CHECK_DETAILS, COMPLIANCE_FRAMEWORKS, SCAN_METRICS } from '../data/securityData';
+import { CHECK_DETAILS, COMPLIANCE_FRAMEWORKS } from '../data/securityData';
 import { 
   Download, 
-  Terminal, 
-  FileText, 
   Search, 
   CheckCircle2, 
-  XCircle, 
-  Eye, 
   Award, 
-  ShieldAlert, 
   ShieldCheck,
   Copy,
   Check,

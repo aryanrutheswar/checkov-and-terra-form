@@ -56,6 +56,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               <p className="text-[11px] text-slate-400 font-mono">IaC Security Gate & Governance Platform</p>
             </div>
           </div>
+
+          {/* Right Header Controls: Mode Selector & Gate Status */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setIsRemediated(!isRemediated)}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+                isRemediated 
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' 
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
+              }`}
+              title="Toggle between vulnerable baseline and remediated infrastructure code"
+            >
+              <span className={`w-2 h-2 rounded-full ${isRemediated ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400 animate-pulse'}`}></span>
+              <span className="hidden sm:inline">Mode:</span>
+              <span className="font-semibold">{isRemediated ? 'Remediated' : 'Vulnerable'}</span>
+            </button>
+
+            <span className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-bold tracking-wider uppercase border ${
+              gateStatus === 'PASSED'
+                ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-500/10 border-rose-500/40 text-rose-300'
+            }`}>
+              Gate: {gateStatus}
+            </span>
+          </div>
         </div>
 
         {/* Tab Navigation */}

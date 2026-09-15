@@ -9,7 +9,6 @@ import { DocumentationView } from './components/DocumentationView';
 import { 
   fetchHealth, 
   runScan, 
-  fetchLatestResults, 
   NormalizedScanResult, 
   SystemHealth 
 } from './services/api';
