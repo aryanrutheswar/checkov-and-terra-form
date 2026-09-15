@@ -1,164 +1,19 @@
 {
-  "total_checks": 12,
-  "passed_checks": 4,
-  "failed_checks": 8,
-  "skipped_checks": 0,
-  "compliance_percentage": 33.3,
-  "gate_status": "BLOCKED",
+  "total_checks": 174,
+  "passed_checks": 163,
+  "failed_checks": 0,
+  "skipped_checks": 11,
+  "compliance_percentage": 100.0,
+  "gate_status": "PASSED",
   "critical_count": 0,
-  "high_count": 1,
-  "medium_count": 3,
-  "low_count": 4,
-  "target_directory": "custom_snippet",
-  "scan_time": "2026-09-15T09:35:57.637531+00:00",
-  "scan_duration_seconds": 7.91,
+  "high_count": 0,
+  "medium_count": 0,
+  "low_count": 0,
+  "target_directory": "terraform/remediated",
+  "scan_time": "2026-09-15T10:16:39.277670+00:00",
+  "scan_duration_seconds": 11.24,
   "checkov_version": "3.3.11",
-  "findings": [
-    {
-      "check_id": "CKV_AWS_145",
-      "severity": "HIGH",
-      "title": "Ensure that S3 buckets are encrypted with KMS by default",
-      "description": "S3 Bucket is not encrypted with Customer Managed Key (CMK).",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Configure aws_s3_bucket_server_side_encryption_configuration with KMS key (aws:kms).",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "S3 Storage"
-    },
-    {
-      "check_id": "CKV_AWS_21",
-      "severity": "MEDIUM",
-      "title": "Ensure all data stored in the S3 bucket have versioning enabled",
-      "description": "Ensure S3 bucket has versioning enabled.",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Enable aws_s3_bucket_versioning to protect against accidental object overwrite or deletion.",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-16-enable-versioning",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "S3 Storage"
-    },
-    {
-      "check_id": "CKV2_AWS_61",
-      "severity": "MEDIUM",
-      "title": "Ensure that an S3 bucket has a lifecycle configuration",
-      "description": "Ensure that an S3 bucket has a lifecycle configuration",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Review main.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-61",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-61",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "IaC Security"
-    },
-    {
-      "check_id": "CUSTOM_AWS_001",
-      "severity": "MEDIUM",
-      "title": "Ensure all S3 buckets have required organizational tags (Environment, Project)",
-      "description": "Custom policy: S3 buckets must be tagged with Environment and Project name for cost allocation.",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Add mandatory tags block containing Environment (dev/stage/production) and Project tags.",
-      "status": "FAILED",
-      "guideline": "All S3 buckets must be tagged with Environment (dev, stage, production) and Project name for cost allocation and governance.",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "Custom Governance"
-    },
-    {
-      "check_id": "CKV2_AWS_6",
-      "severity": "LOW",
-      "title": "Ensure that S3 bucket has a Public Access block",
-      "description": "Ensure that S3 bucket has a Public Access block",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Review main.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "IaC Security"
-    },
-    {
-      "check_id": "CKV2_AWS_62",
-      "severity": "LOW",
-      "title": "Ensure S3 buckets should have event notifications enabled",
-      "description": "Ensure S3 buckets should have event notifications enabled",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Review main.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-62",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-62",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "IaC Security"
-    },
-    {
-      "check_id": "CKV_AWS_18",
-      "severity": "LOW",
-      "title": "Ensure the S3 bucket has access logging enabled",
-      "description": "Ensure the S3 bucket has access logging enabled for audit trails.",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Configure aws_s3_bucket_logging to store access logs in a designated security audit bucket.",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-13-enable-logging",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "S3 Storage"
-    },
-    {
-      "check_id": "CKV_AWS_144",
-      "severity": "LOW",
-      "title": "Ensure that S3 bucket has cross-region replication enabled",
-      "description": "Ensure that S3 bucket has cross-region replication enabled",
-      "file": "main.tf",
-      "line": 1,
-      "line_range": [
-        1,
-        1
-      ],
-      "resource": "aws_s3_bucket.b",
-      "remediation": "Review main.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled",
-      "status": "FAILED",
-      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled",
-      "code_snippet": "resource \"aws_s3_bucket\" \"b\" { bucket = \"my-test-bucket\" }",
-      "category": "IaC Security"
-    }
-  ],
+  "findings": [],
   "exit_code": 0,
   "block_policy": [
     "CRITICAL",
