@@ -1,0 +1,9 @@
+{
+  "block_on": ["CRITICAL", "HIGH"],
+  "warn_on": ["MEDIUM", "LOW"],
+  "allowed_directories": [
+    "terraform/vulnerable",
+    "terraform/remediated"
+  ],
+  "default_target": "terraform/vulnerable"
+}

@@ -1,0 +1,725 @@
+{
+  "total_checks": 60,
+  "passed_checks": 21,
+  "failed_checks": 39,
+  "skipped_checks": 0,
+  "compliance_percentage": 35.0,
+  "gate_status": "BLOCKED",
+  "critical_count": 4,
+  "high_count": 7,
+  "medium_count": 5,
+  "low_count": 23,
+  "target_directory": "terraform/vulnerable",
+  "scan_time": "2026-09-15T07:42:46.529295+00:00",
+  "scan_duration_seconds": 8.74,
+  "checkov_version": "3.3.11",
+  "findings": [
+    {
+      "check_id": "CKV_AWS_62",
+      "severity": "CRITICAL",
+      "title": "Ensure IAM policies that allow full \"*-*\" administrative privileges are not created",
+      "description": "IAM policy contains wildcard Action: '*' on Resource: '*', granting full administrative privileges.",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Scope actions to specific service APIs and define explicit resource ARNs with condition constraints.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-45",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IAM Governance"
+    },
+    {
+      "check_id": "CKV_AWS_287",
+      "severity": "CRITICAL",
+      "title": "Ensure IAM policies does not allow credentials exposure",
+      "description": "Ensure IAM policies does not allow credentials exposure",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-287",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-287",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CUSTOM_AWS_003",
+      "severity": "CRITICAL",
+      "title": "Ensure IAM policy documents do not allow wildcard administrator access",
+      "description": "Custom AST scanner detected wildcard AdministratorAccess pattern in IAM policy.",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Eliminate wildcard '*' actions from IAM policy statements.",
+      "status": "FAILED",
+      "guideline": null,
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IAM Governance"
+    },
+    {
+      "check_id": "CKV_AWS_16",
+      "severity": "CRITICAL",
+      "title": "Ensure all data stored in the RDS is securely encrypted at rest",
+      "description": "RDS database instance is allocated with publicly_accessible = true, assigning a public IP address accessible from the internet.",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Deploy RDS within private aws_db_subnet_group across multiple private subnets with publicly_accessible = false.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-4",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "Database Security"
+    },
+    {
+      "check_id": "CKV_AWS_17",
+      "severity": "HIGH",
+      "title": "Ensure all data stored in RDS is not publicly accessible",
+      "description": "RDS storage is unencrypted at rest, risking plaintext data exposure in disk snapshots.",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Enable storage_encrypted = true with a Customer Managed KMS Key (CMK).",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/public-policies/public-2",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "Database Security"
+    },
+    {
+      "check_id": "CUSTOM_AWS_002",
+      "severity": "HIGH",
+      "title": "Ensure RDS backup retention period is configured for at least 7 days",
+      "description": "Enterprise disaster recovery SLA requires minimum 7-day automated backup retention.",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Set backup_retention_period to at least 7 days (recommended 14 days) on aws_db_instance.",
+      "status": "FAILED",
+      "guideline": "All RDS instances must retain automated backups for at least 7 days to satisfy business continuity SLAs.",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "Disaster Recovery"
+    },
+    {
+      "check_id": "CKV_AWS_20",
+      "severity": "HIGH",
+      "title": "S3 Bucket has an ACL defined which allows public READ access.",
+      "description": "The S3 bucket ACL is configured as 'public-read', exposing bucket objects to anonymous internet access.",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Remove public-read ACL and configure aws_s3_bucket_public_access_block with all four restrictions enabled.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-1-acl-read-permissions-everyone",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "S3 Storage"
+    },
+    {
+      "check_id": "CKV_AWS_145",
+      "severity": "HIGH",
+      "title": "Ensure that S3 buckets are encrypted with KMS by default",
+      "description": "S3 Bucket is not encrypted with Customer Managed Key (CMK).",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Configure aws_s3_bucket_server_side_encryption_configuration with KMS key (aws:kms).",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "S3 Storage"
+    },
+    {
+      "check_id": "CUSTOM_AWS_004",
+      "severity": "HIGH",
+      "title": "Ensure S3 server side encryption uses Customer Managed Key (CMK) ARN",
+      "description": "Ensure S3 server side encryption uses Customer Managed Key (CMK) ARN",
+      "file": "s3.tf",
+      "line": 27,
+      "line_range": [
+        27,
+        35
+      ],
+      "resource": "aws_s3_bucket_server_side_encryption_configuration.vulnerable_sse",
+      "remediation": "Review s3.tf and configure secure attributes according to benchmark guidelines: None",
+      "status": "FAILED",
+      "guideline": null,
+      "code_snippet": "resource \"aws_s3_bucket_server_side_encryption_configuration\" \"vulnerable_sse\" {\n  bucket = aws_s3_bucket.vulnerable_bucket.id\n\n  rule {\n    apply_server_side_encryption_by_default {\n      sse_algorithm = \"AES256\"\n    }\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_24",
+      "severity": "HIGH",
+      "title": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22",
+      "description": "Security group opens port 22 (SSH) to the entire public Internet (0.0.0.0/0), exposing virtual instances to brute-force attacks.",
+      "file": "security_groups.tf",
+      "line": 10,
+      "line_range": [
+        10,
+        43
+      ],
+      "resource": "aws_security_group.vulnerable_app_sg",
+      "remediation": "Restrict SSH ingress to specific bastion host CIDRs or use AWS Systems Manager Session Manager with no open ports.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-1-port-security",
+      "code_snippet": "resource \"aws_security_group\" \"vulnerable_app_sg\" {\n  name        = \"app-web-sg-vulnerable\"\n  description = \"Security group for web application\"\n  vpc_id      = \"vpc-12345678\"\n\n  # Flawed: Global ingress on SSH port\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Flawed: Global ingress on RDP port\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Unrestricted egress\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  tags = {\n    Name        = \"vulnerable-app-sg\"\n    Environment = var.environment\n  }\n}",
+      "category": "Network Security"
+    },
+    {
+      "check_id": "CKV_AWS_25",
+      "severity": "HIGH",
+      "title": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 3389",
+      "description": "Security group allows unrestricted ingress from 0.0.0.0/0 to port 3389 (RDP).",
+      "file": "security_groups.tf",
+      "line": 10,
+      "line_range": [
+        10,
+        43
+      ],
+      "resource": "aws_security_group.vulnerable_app_sg",
+      "remediation": "Restrict RDP ingress (port 3389) to specific trusted CIDRs or VPN gateways.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-2",
+      "code_snippet": "resource \"aws_security_group\" \"vulnerable_app_sg\" {\n  name        = \"app-web-sg-vulnerable\"\n  description = \"Security group for web application\"\n  vpc_id      = \"vpc-12345678\"\n\n  # Flawed: Global ingress on SSH port\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Flawed: Global ingress on RDP port\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Unrestricted egress\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  tags = {\n    Name        = \"vulnerable-app-sg\"\n    Environment = var.environment\n  }\n}",
+      "category": "Network Security"
+    },
+    {
+      "check_id": "CKV2_AWS_30",
+      "severity": "MEDIUM",
+      "title": "Ensure Postgres RDS as aws_db_instance has Query Logging enabled",
+      "description": "Ensure Postgres RDS as aws_db_instance has Query Logging enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-postgres-rds-has-query-logging-enabled",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-postgres-rds-has-query-logging-enabled",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_60",
+      "severity": "MEDIUM",
+      "title": "Ensure RDS instance with copy tags to snapshots is enabled",
+      "description": "Ensure RDS instance with copy tags to snapshots is enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-2-60",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-2-60",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_61",
+      "severity": "MEDIUM",
+      "title": "Ensure that an S3 bucket has a lifecycle configuration",
+      "description": "Ensure that an S3 bucket has a lifecycle configuration",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Review s3.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-61",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-61",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_21",
+      "severity": "MEDIUM",
+      "title": "Ensure all data stored in the S3 bucket have versioning enabled",
+      "description": "Ensure S3 bucket has versioning enabled.",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Enable aws_s3_bucket_versioning to protect against accidental object overwrite or deletion.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-16-enable-versioning",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "S3 Storage"
+    },
+    {
+      "check_id": "CUSTOM_AWS_001",
+      "severity": "MEDIUM",
+      "title": "Ensure all S3 buckets have required organizational tags (Environment, Project)",
+      "description": "Custom policy: S3 buckets must be tagged with Environment and Project name for cost allocation.",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Add mandatory tags block containing Environment (dev/stage/production) and Project tags.",
+      "status": "FAILED",
+      "guideline": "All S3 buckets must be tagged with Environment (dev, stage, production) and Project name for cost allocation and governance.",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "Custom Governance"
+    },
+    {
+      "check_id": "CKV_AWS_288",
+      "severity": "LOW",
+      "title": "Ensure IAM policies does not allow data exfiltration",
+      "description": "Ensure IAM policies does not allow data exfiltration",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-288",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-288",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_289",
+      "severity": "LOW",
+      "title": "Ensure IAM policies does not allow permissions management / resource exposure without constraints",
+      "description": "Ensure IAM policies does not allow permissions management / resource exposure without constraints",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-289",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-289",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_286",
+      "severity": "LOW",
+      "title": "Ensure IAM policies does not allow privilege escalation",
+      "description": "Ensure IAM policies does not allow privilege escalation",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-286",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-286",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_63",
+      "severity": "LOW",
+      "title": "Ensure no IAM policies documents allow \"*\" as a statement's actions",
+      "description": "Ensure no IAM policies documents allow \"*\" as a statement's actions",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-48",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-48",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_355",
+      "severity": "LOW",
+      "title": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions",
+      "description": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-355",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-355",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_290",
+      "severity": "LOW",
+      "title": "Ensure IAM policies does not allow write access without constraints",
+      "description": "Ensure IAM policies does not allow write access without constraints",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-290",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-290",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_40",
+      "severity": "LOW",
+      "title": "Ensure AWS IAM policy does not allow full IAM privileges",
+      "description": "Ensure AWS IAM policy does not allow full IAM privileges",
+      "file": "iam.tf",
+      "line": 25,
+      "line_range": [
+        25,
+        40
+      ],
+      "resource": "aws_iam_policy.vulnerable_admin_policy",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-2-40",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-2-40",
+      "code_snippet": "resource \"aws_iam_policy\" \"vulnerable_admin_policy\" {\n  name        = \"app-overprivileged-policy\"\n  description = \"Application policy with blanket admin permissions\"\n\n  # Flawed: Full administrative wildcard rights\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect   = \"Allow\"\n        Action   = \"*\"\n        Resource = \"*\"\n      }\n    ]\n  })\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_273",
+      "severity": "LOW",
+      "title": "Ensure access is controlled through SSO and not AWS IAM defined users",
+      "description": "Ensure access is controlled through SSO and not AWS IAM defined users",
+      "file": "iam.tf",
+      "line": 47,
+      "line_range": [
+        47,
+        49
+      ],
+      "resource": "aws_iam_user.vulnerable_deployer",
+      "remediation": "Review iam.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-273",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-273",
+      "code_snippet": "resource \"aws_iam_user\" \"vulnerable_deployer\" {\n  name = \"legacy-deployer-service-account\"\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_133",
+      "severity": "LOW",
+      "title": "Ensure that RDS instances has backup policy",
+      "description": "Ensure that RDS instances has backup policy",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-rds-instances-have-backup-policy",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-rds-instances-have-backup-policy",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_129",
+      "severity": "LOW",
+      "title": "Ensure that respective logs of Amazon Relational Database Service (Amazon RDS) are enabled",
+      "description": "Ensure that respective logs of Amazon Relational Database Service (Amazon RDS) are enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_226",
+      "severity": "LOW",
+      "title": "Ensure DB instance gets all minor upgrades automatically",
+      "description": "Ensure DB instance gets all minor upgrades automatically",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-aws-db-instance-gets-all-minor-upgrades-automatically",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_118",
+      "severity": "LOW",
+      "title": "Ensure that enhanced monitoring is enabled for Amazon RDS instances",
+      "description": "Ensure that enhanced monitoring is enabled for Amazon RDS instances",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-enhanced-monitoring-is-enabled-for-amazon-rds-instances",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-enhanced-monitoring-is-enabled-for-amazon-rds-instances",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_161",
+      "severity": "LOW",
+      "title": "Ensure RDS database has IAM authentication enabled",
+      "description": "Ensure RDS database has IAM authentication enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-rds-database-has-iam-authentication-enabled",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-rds-database-has-iam-authentication-enabled",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_293",
+      "severity": "LOW",
+      "title": "Ensure that AWS database instances have deletion protection enabled",
+      "description": "Ensure that AWS database instances have deletion protection enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-293",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-293",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_353",
+      "severity": "LOW",
+      "title": "Ensure that RDS instances have performance insights enabled",
+      "description": "Ensure that RDS instances have performance insights enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-353",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-353",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_157",
+      "severity": "LOW",
+      "title": "Ensure that RDS instances have Multi-AZ enabled",
+      "description": "Ensure that RDS instances have Multi-AZ enabled",
+      "file": "rds.tf",
+      "line": 12,
+      "line_range": [
+        12,
+        43
+      ],
+      "resource": "aws_db_instance.vulnerable_postgres",
+      "remediation": "Review rds.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-73",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-73",
+      "code_snippet": "resource \"aws_db_instance\" \"vulnerable_postgres\" {\n  identifier        = \"app-db-vulnerable\"\n  allocated_storage = 20\n  engine            = \"postgres\"\n  engine_version    = \"15.3\"\n  instance_class    = \"db.t3.micro\"\n\n  # Flawed: Plaintext credentials stored directly in version control\n  username = \"dbadmin\"\n  password = \"SuperSecretPassword123!\"\n\n  # Flawed: Publicly accessible\n  publicly_accessible = true\n\n  # Flawed: Encryption at rest disabled\n  storage_encrypted = false\n\n  # Flawed: No automated backups retained\n  backup_retention_period = 0\n\n  # Flawed: Automated minor version upgrades disabled\n  auto_minor_version_upgrade = false\n\n  # Flawed: No deletion protection\n  deletion_protection = false\n\n  skip_final_snapshot = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_62",
+      "severity": "LOW",
+      "title": "Ensure S3 buckets should have event notifications enabled",
+      "description": "Ensure S3 buckets should have event notifications enabled",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Review s3.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-62",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-62",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_6",
+      "severity": "LOW",
+      "title": "Ensure that S3 bucket has a Public Access block",
+      "description": "Ensure that S3 bucket has a Public Access block",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Review s3.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_18",
+      "severity": "LOW",
+      "title": "Ensure the S3 bucket has access logging enabled",
+      "description": "Ensure the S3 bucket has access logging enabled for audit trails.",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Configure aws_s3_bucket_logging to store access logs in a designated security audit bucket.",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-13-enable-logging",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "S3 Storage"
+    },
+    {
+      "check_id": "CKV_AWS_144",
+      "severity": "LOW",
+      "title": "Ensure that S3 bucket has cross-region replication enabled",
+      "description": "Ensure that S3 bucket has cross-region replication enabled",
+      "file": "s3.tf",
+      "line": 11,
+      "line_range": [
+        11,
+        18
+      ],
+      "resource": "aws_s3_bucket.vulnerable_bucket",
+      "remediation": "Review s3.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled",
+      "code_snippet": "resource \"aws_s3_bucket\" \"vulnerable_bucket\" {\n  bucket        = \"company-data-lake-raw-${var.environment}\"\n  force_destroy = true\n\n  tags = {\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_23",
+      "severity": "LOW",
+      "title": "Ensure every security group and rule has a description",
+      "description": "Ensure every security group and rule has a description",
+      "file": "security_groups.tf",
+      "line": 10,
+      "line_range": [
+        10,
+        43
+      ],
+      "resource": "aws_security_group.vulnerable_app_sg",
+      "remediation": "Review security_groups.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31",
+      "code_snippet": "resource \"aws_security_group\" \"vulnerable_app_sg\" {\n  name        = \"app-web-sg-vulnerable\"\n  description = \"Security group for web application\"\n  vpc_id      = \"vpc-12345678\"\n\n  # Flawed: Global ingress on SSH port\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Flawed: Global ingress on RDP port\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Unrestricted egress\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  tags = {\n    Name        = \"vulnerable-app-sg\"\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV_AWS_382",
+      "severity": "LOW",
+      "title": "Ensure no security groups allow egress from 0.0.0.0:0 to port -1",
+      "description": "Ensure no security groups allow egress from 0.0.0.0:0 to port -1",
+      "file": "security_groups.tf",
+      "line": 10,
+      "line_range": [
+        10,
+        43
+      ],
+      "resource": "aws_security_group.vulnerable_app_sg",
+      "remediation": "Review security_groups.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382",
+      "code_snippet": "resource \"aws_security_group\" \"vulnerable_app_sg\" {\n  name        = \"app-web-sg-vulnerable\"\n  description = \"Security group for web application\"\n  vpc_id      = \"vpc-12345678\"\n\n  # Flawed: Global ingress on SSH port\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Flawed: Global ingress on RDP port\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Unrestricted egress\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  tags = {\n    Name        = \"vulnerable-app-sg\"\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    },
+    {
+      "check_id": "CKV2_AWS_5",
+      "severity": "LOW",
+      "title": "Ensure that Security Groups are attached to another resource",
+      "description": "Ensure that Security Groups are attached to another resource",
+      "file": "security_groups.tf",
+      "line": 10,
+      "line_range": [
+        10,
+        43
+      ],
+      "resource": "aws_security_group.vulnerable_app_sg",
+      "remediation": "Review security_groups.tf and configure secure attributes according to benchmark guidelines: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-security-groups-are-attached-to-ec2-instances-or-elastic-network-interfaces-enis",
+      "status": "FAILED",
+      "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-security-groups-are-attached-to-ec2-instances-or-elastic-network-interfaces-enis",
+      "code_snippet": "resource \"aws_security_group\" \"vulnerable_app_sg\" {\n  name        = \"app-web-sg-vulnerable\"\n  description = \"Security group for web application\"\n  vpc_id      = \"vpc-12345678\"\n\n  # Flawed: Global ingress on SSH port\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Flawed: Global ingress on RDP port\n  ingress {\n    from_port   = 3389\n    to_port     = 3389\n    protocol    = \"tcp\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  # Unrestricted egress\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = \"-1\"\n    cidr_blocks = [\"0.0.0.0/0\"]\n  }\n\n  tags = {\n    Name        = \"vulnerable-app-sg\"\n    Environment = var.environment\n  }\n}",
+      "category": "IaC Security"
+    }
+  ],
+  "exit_code": 0,
+  "block_policy": [
+    "CRITICAL",
+    "HIGH"
+  ]
+}

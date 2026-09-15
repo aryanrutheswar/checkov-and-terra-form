@@ -1,15 +1,49 @@
 import React, { useState } from 'react';
 import { INFRASTRUCTURE_FILES, CHECK_DETAILS } from '../data/securityData';
-import { Code2, ShieldCheck, ShieldAlert, FileText, AlertTriangle, Copy, Check, Sparkles, GitPullRequest } from 'lucide-react';
+import { 
+  Code2, 
+  ShieldCheck, 
+  ShieldAlert, 
+  FileText, 
+  AlertTriangle, 
+  Copy, 
+  Check, 
+  Sparkles, 
+  GitPullRequest,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink
+} from 'lucide-react';
+import { NormalizedScanResult, Finding } from '../services/api';
 
-export const CodeInspector: React.FC = () => {
+interface CodeInspectorProps {
+  scanResult?: NormalizedScanResult | null;
+  isRemediated?: boolean;
+}
+
+export const CodeInspector: React.FC<CodeInspectorProps> = ({ scanResult, isRemediated = false }) => {
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'split' | 'vulnerable' | 'remediated' | 'ai-patch'>('split');
   const [copied, setCopied] = useState(false);
   const [patchApplied, setPatchApplied] = useState(false);
+  const [inspectedCheckId, setInspectedCheckId] = useState<string | null>(null);
 
   const currentFile = INFRASTRUCTURE_FILES[selectedFileIndex];
-  const fileChecks = CHECK_DETAILS.filter(c => c.file === currentFile.filename);
+
+  // Find real checkov findings matching current file
+  const realFileFindings: Finding[] = (scanResult && scanResult.findings)
+    ? scanResult.findings.filter(f => f.file.toLowerCase() === currentFile.filename.toLowerCase())
+    : [];
+
+  const failingCount = scanResult 
+    ? realFileFindings.length 
+    : currentFile.failingRulesCount;
+  const passedCount = isRemediated 
+    ? currentFile.passedRulesCount 
+    : (scanResult ? 0 : currentFile.passedRulesCount);
+
+  // Fallback checks from CHECK_DETAILS
+  const fallbackChecks = CHECK_DETAILS.filter(c => c.file === currentFile.filename);
 
   const generatePatch = () => {
     const vulnLines = currentFile.vulnerableCode.split('\n');
@@ -42,12 +76,12 @@ export const CodeInspector: React.FC = () => {
       {/* Header Controls */}
       <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
-            <Code2 className="w-6 h-6 text-indigo-400" />
-            <span>Terraform HCL Security Inspector</span>
+          <h1 className="text-xl font-bold font-mono text-slate-100 flex items-center space-x-2">
+            <Code2 className="w-6 h-6 text-cyan-400" />
+            <span>SECURITY FINDINGS & HCL CODE INSPECTOR</span>
           </h1>
-          <p className="text-xs text-slate-400">
-            Compare side-by-side vulnerable anti-patterns against production-hardened Checkov remediated HCL manifests.
+          <p className="text-xs text-slate-400 font-mono mt-1">
+            Analyze real Checkov findings, inspect root-cause vulnerabilities, and compare flawed HCL anti-patterns against hardened manifests.
           </p>
         </div>
 
@@ -61,6 +95,7 @@ export const CodeInspector: React.FC = () => {
                 onClick={() => {
                   setSelectedFileIndex(idx);
                   setPatchApplied(false);
+                  setInspectedCheckId(null);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all ${
                   selectedFileIndex === idx
@@ -127,14 +162,14 @@ export const CodeInspector: React.FC = () => {
           <ShieldAlert className="w-5 h-5 text-rose-400" />
           <div>
             <span className="text-xs font-semibold text-slate-400">Vulnerable Baseline Flaws</span>
-            <p className="text-sm font-bold text-rose-400">{currentFile.failingRulesCount} Checkov Violations</p>
+            <p className="text-sm font-bold text-rose-400">{failingCount} Checkov Violations</p>
           </div>
         </div>
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center space-x-3">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
           <div>
             <span className="text-xs font-semibold text-slate-400">Hardened Remediated Posture</span>
-            <p className="text-sm font-bold text-emerald-400">{currentFile.passedRulesCount} Security Controls Passed</p>
+            <p className="text-sm font-bold text-emerald-400">{passedCount} Security Controls Passed</p>
           </div>
         </div>
       </div>
@@ -155,7 +190,7 @@ export const CodeInspector: React.FC = () => {
                   </span>
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Generates 1-click unified git patches to automatically resolve all {currentFile.failingRulesCount} Checkov policy failures in {currentFile.filename}.
+                  Generates 1-click unified git patches to automatically resolve all Checkov policy failures in {currentFile.filename}.
                 </p>
               </div>
             </div>
@@ -179,12 +214,12 @@ export const CodeInspector: React.FC = () => {
                 {patchApplied ? (
                   <>
                     <ShieldCheck className="w-4 h-4 text-emerald-200" />
-                    <span>Patch Applied Successfully!</span>
+                    <span>Patch Applied (Simulated)</span>
                   </>
                 ) : (
                   <>
                     <GitPullRequest className="w-4 h-4" />
-                    <span>Apply Remediation Patch</span>
+                    <span>Inspect Remediation Patch</span>
                   </>
                 )}
               </button>
@@ -195,7 +230,7 @@ export const CodeInspector: React.FC = () => {
             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center justify-between animate-fadeIn">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <span>Simulated auto-remediation complete: <strong>{currentFile.filename}</strong> has been updated to production-hardened Checkov compliance.</span>
+                <span>Simulated remediation preview: <strong>{currentFile.filename}</strong> matches production-hardened Checkov compliance.</span>
               </div>
               <span className="font-mono text-emerald-400">0 Violations Remaining</span>
             </div>
@@ -276,28 +311,120 @@ export const CodeInspector: React.FC = () => {
         </div>
       )}
 
-      {/* Rules Mapped to Selected File */}
+      {/* Rules Mapped to Selected File (Requirement #7 and #10: Real Checkov findings) */}
       <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-        <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-          <AlertTriangle className="w-4 h-4 text-indigo-400" />
-          <span>Security Checks Evaluated on {currentFile.filename}</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {fileChecks.map(check => (
-            <div key={check.id} className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-indigo-400">{check.id}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400">
-                  {check.severity}
-                </span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+            <AlertTriangle className="w-4 h-4 text-indigo-400" />
+            <span>Security Findings & Remediation Inspector for {currentFile.filename}</span>
+          </h2>
+          <span className="text-xs font-mono text-slate-400">
+            {realFileFindings.length > 0 ? `${realFileFindings.length} Active Findings` : `${fallbackChecks.length} Evaluated Rules`}
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {(realFileFindings.length > 0 ? realFileFindings : fallbackChecks).map((check: any) => {
+            const checkId = check.check_id || check.id;
+            const checkTitle = check.title || check.name;
+            const isInspected = inspectedCheckId === checkId;
+            return (
+              <div key={checkId} className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3 transition-all">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2 flex-wrap">
+                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                      {checkId}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      check.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
+                      check.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                      'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                    }`}>
+                      {check.severity}
+                    </span>
+                    <span className="text-xs font-mono text-slate-400">
+                      File: <code className="text-slate-300">{check.file}</code>
+                      {check.line ? ` : Line ${check.line}` : ''}
+                    </span>
+                    {check.resource && (
+                      <span className="text-xs font-mono text-slate-400 hidden md:inline">
+                        • Resource: <span className="text-cyan-300">{check.resource}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setInspectedCheckId(isInspected ? null : checkId)}
+                    className="px-3 py-1 rounded-lg text-xs font-mono bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center space-x-1.5 transition-all self-start sm:self-auto"
+                  >
+                    <span>{isInspected ? 'Hide Remediation' : 'Inspect Remediation'}</span>
+                    {isInspected ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold text-slate-200">{checkTitle}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{check.description || check.guideline}</p>
+                </div>
+
+                {/* Inspect Remediation Deep-Dive (Requirement #10) */}
+                {isInspected && (
+                  <div className="mt-3 p-4 rounded-xl bg-slate-950 border border-cyan-500/30 space-y-3 animate-fadeIn">
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-mono font-bold text-rose-400 uppercase tracking-wider">
+                        Why this configuration is insecure:
+                      </span>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {check.description || 'Violates CIS AWS security benchmarks by introducing overly permissive access or missing mandatory encryption controls.'}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-1">
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-mono text-rose-400 flex items-center space-x-1">
+                          <ShieldAlert className="w-3 h-3" />
+                          <span>Vulnerable Terraform Pattern ({check.file}{check.line ? ` : L${check.line}` : ''}):</span>
+                        </span>
+                        <div className="p-3 rounded-lg bg-[#0a0507] border border-rose-900/40 text-xs font-mono text-rose-200/90 overflow-x-auto max-h-36">
+                          <pre>{check.code_snippet || check.vulnerableSnippet || currentFile.vulnerableCode}</pre>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[11px] font-mono text-emerald-400 flex items-center space-x-1">
+                          <ShieldCheck className="w-3 h-3" />
+                          <span>Recommended Secure Configuration:</span>
+                        </span>
+                        <div className="p-3 rounded-lg bg-[#040d0c] border border-emerald-900/40 text-xs font-mono text-emerald-200/90 overflow-x-auto max-h-36">
+                          <pre>{check.remediatedSnippet || currentFile.remediatedCode}</pre>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-500/20 text-xs font-mono space-y-1">
+                      <span className="text-cyan-400 font-bold">Remediation Guidance: </span>
+                      <p className="text-slate-300">{check.remediation}</p>
+                      {check.guideline && (
+                        <div className="pt-1">
+                          <a 
+                            href={check.guideline} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-cyan-400 hover:text-cyan-300 underline inline-flex items-center space-x-1"
+                          >
+                            <span>View Official Benchmark Documentation</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <h3 className="text-xs font-bold text-slate-200">{check.name}</h3>
-              <p className="text-xs text-slate-400">{check.guideline}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
   );
 };
-

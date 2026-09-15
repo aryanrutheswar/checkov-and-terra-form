@@ -1,4 +1,4 @@
-name: "Checkov IaC Security Gate"
+name: "IaC Security Gate & Terraform Pipeline"
 
 on:
   push:
@@ -9,9 +9,16 @@ on:
     branches:
       - main
       - master
-  schedule:
-    # Daily scheduled scan at 02:00 UTC
-    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      target_suite:
+        description: "Target Terraform Suite to Scan & Deploy"
+        required: true
+        default: "terraform/remediated"
+        type: choice
+        options:
+          - "terraform/remediated"
+          - "terraform/vulnerable"
 
 permissions:
   contents: read
@@ -20,9 +27,17 @@ permissions:
   pull-requests: write
 
 jobs:
-  checkov-scan:
-    name: "Static Analysis & Policy Enforcement"
+  # ============================================================================
+  # STAGE 1: Checkov Static Analysis Security Gate
+  # Evaluates Terraform manifests against CIS AWS Benchmarks & Custom Policies.
+  # If any HIGH or CRITICAL policy violation exists, pipeline FAILS here.
+  # ============================================================================
+  security-gate:
+    name: "Stage 1: Checkov Security Gate"
     runs-on: ubuntu-latest
+
+    env:
+      TARGET_SUITE: ${{ inputs.target_suite || 'terraform/remediated' }}
 
     steps:
       - name: Checkout Repository
@@ -41,33 +56,38 @@ jobs:
           python -m pip install --upgrade pip
           pip install checkov
 
-      - name: Execute Checkov Security Scan (Remediated Suite)
-        id: checkov_remediated
+      - name: Execute Checkov Security Gate Scan
+        id: checkov_scan
         run: |
           mkdir -p reports
+          echo "Scanning target suite: $TARGET_SUITE"
+
           checkov \
-            --directory ./terraform/remediated \
+            --directory "./$TARGET_SUITE" \
             --external-checks-dir ./custom_policies/yaml \
             --external-checks-dir ./custom_policies/python \
             --framework terraform \
             --output cli \
             --output sarif \
+            --output json \
             --output-file-path ./reports \
             --hard-fail-on HIGH \
             --soft-fail false
-        continue-on-error: false
 
-      - name: Execute Checkov Security Scan (Vulnerable Suite - Audit Only)
-        id: checkov_audit
+      - name: Generate Security Gate Summary
         if: always()
         run: |
-          checkov \
-            --directory ./terraform/vulnerable \
-            --framework terraform \
-            --output cli \
-            --soft-fail true
+          echo "## 🛡️ IaC Security Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Target Suite:** \`$TARGET_SUITE\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.checkov_scan.outcome }}" == "success" ]; then
+            echo "### ✅ Security Gate: **PASSED**" >> $GITHUB_STEP_SUMMARY
+            echo "Zero HIGH or CRITICAL policy violations detected. Unlocking Stage 2 (Terraform Validate & Plan)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Security Gate: **FAILED - DEPLOYMENT BLOCKED**" >> $GITHUB_STEP_SUMMARY
+            echo "Checkov detected policy violations exceeding the severity threshold. Pipeline halted to prevent insecure cloud deployment." >> $GITHUB_STEP_SUMMARY
+          fi
 
-      - name: Upload Scan Artifacts
+      - name: Upload Security Scan Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,3 +100,57 @@ jobs:
         with:
           sarif_file: ./reports/results_sarif.sarif
           category: checkov-iac-scan
+
+  # ============================================================================
+  # STAGE 2: Terraform Validation & Speculative Plan
+  # Strictly depends on Stage 1 (needs: [security-gate]).
+  # Will ONLY execute if Checkov static analysis passes with 0 critical violations.
+  # ============================================================================
+  terraform-validate-and-plan:
+    name: "Stage 2: Terraform Validate & Plan"
+    needs: [security-gate]
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET_SUITE: ${{ inputs.target_suite || 'terraform/remediated' }}
+      AWS_ACCESS_KEY_ID: "mock-access-key-for-validation"
+      AWS_SECRET_ACCESS_KEY: "mock-secret-key-for-validation"
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_EC2_METADATA_DISABLED: "true"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.5"
+
+      - name: Terraform Format Check
+        run: |
+          echo "Checking code formatting in $TARGET_SUITE..."
+          terraform -chdir="./$TARGET_SUITE" fmt -check
+
+      - name: Terraform Initialization
+        run: |
+          echo "Initializing Terraform in $TARGET_SUITE..."
+          terraform -chdir="./$TARGET_SUITE" init -backend=false
+
+      - name: Terraform Syntax & Type Validation
+        run: |
+          echo "Validating Terraform syntax in $TARGET_SUITE..."
+          terraform -chdir="./$TARGET_SUITE" validate
+
+      - name: Terraform Speculative Plan
+        run: |
+          echo "Generating speculative plan for $TARGET_SUITE..."
+          terraform -chdir="./$TARGET_SUITE" plan -no-color
+
+      - name: Publish Deployment Approval Summary
+        if: success()
+        run: |
+          echo "## 🚀 Deployment Gate: APPROVED" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Verification:** Passed Checkov policy enforcement" >> $GITHUB_STEP_SUMMARY
+          echo "- **Terraform Verification:** Syntax validated & Speculative plan succeeded" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Ready for safe automated infrastructure provisioning" >> $GITHUB_STEP_SUMMARY

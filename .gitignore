@@ -38,8 +38,24 @@ venv/
 ENV/
 .checkov/
 
+# Secrets, Credentials & Environments
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa
+secrets/
+
 # Editor & OS Files
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
+
+# Temporary Custom Scan Snippets
+reports/custom_scan/
+reports/scan_custom/
+

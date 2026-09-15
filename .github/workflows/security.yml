@@ -1,0 +1,67 @@
+name: "IaC Checkov Security Scanner & Gate"
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Terraform Target Directory"
+        required: true
+        default: "terraform/remediated"
+        type: choice
+        options:
+          - "terraform/remediated"
+          - "terraform/vulnerable"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  checkov-security-scan:
+    name: "Checkov IaC Security Gate"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Pinned Checkov CLI
+        run: |
+          pip install checkov==3.3.11
+
+      - name: Run Checkov Security Scan
+        id: scan
+        run: |
+          mkdir -p reports
+          TARGET_DIR="${{ github.event.inputs.target || 'terraform/remediated' }}"
+          echo "Scanning Terraform Directory: $TARGET_DIR"
+          checkov -d "$TARGET_DIR" \
+            --framework terraform \
+            --output cli \
+            --output json \
+            --output sarif \
+            --output-file-path ./reports \
+            --hard-fail-on HIGH
+
+      - name: Upload SARIF Scan Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: reports/results_sarif.sarif
+          category: checkov-iac-scan
+
+      - name: Upload Scan Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkov-scan-artifacts
+          path: reports/

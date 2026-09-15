@@ -50,10 +50,12 @@ else {
     $targetsToScan += $Target
 }
 
+$overallExitCode = 0
+
 foreach ($t in $targetsToScan) {
     Write-Host "`n>>> Scanning target suite: ./terraform/$t (Framework: $Framework)" -ForegroundColor Green
     $scanDir = "./terraform/$t"
-    $reportPrefix = "./reports/scan_$t"
+    $reportDir = "./reports"
 
     $argsList = @(
         "-d", $scanDir,
@@ -67,9 +69,9 @@ foreach ($t in $targetsToScan) {
     }
 
     if ($ExportFormat -eq "all") {
-        $argsList += @("--output", "cli", "--output", "json", "--output", "sarif", "--output-file-path", $reportPrefix)
+        $argsList += @("--output", "cli", "--output", "json", "--output", "sarif", "--output-file-path", $reportDir)
     } else {
-        $argsList += @("--output", $ExportFormat, "--output-file-path", $reportPrefix)
+        $argsList += @("--output", $ExportFormat, "--output-file-path", $reportDir)
     }
 
     if ($SoftFail) {
@@ -80,22 +82,33 @@ foreach ($t in $targetsToScan) {
         & checkov @argsList
     }
     else {
-        $pyArgs = @("-c", "import sys; from checkov.main import Checkov; sys.argv=['checkov'] + sys.argv[1:]; Checkov().run()") + $argsList
+        $pyArgs = @("-c", "import sys; from checkov.main import Checkov; sys.argv=['checkov'] + sys.argv[1:]; sys.exit(Checkov().run())") + $argsList
         & python @pyArgs
     }
     $exitCode = $LASTEXITCODE
 
+    # Copy target specific reports for archival
+    if (Test-Path "./reports/results_json.json") {
+        Copy-Item "./reports/results_json.json" -Destination "./reports/scan_${t}_results_json.json" -Force -ErrorAction SilentlyContinue
+    }
+
     if ($exitCode -eq 0) {
-        Write-Host "[PASSED] Target '$t' passed security policy checks with 0 critical/high violations." -ForegroundColor Green
+        Write-Host "`n[PASSED] Target '$t' passed security policy checks with 0 critical/high violations." -ForegroundColor Green
     }
     else {
-        Write-Host "[VIOLATIONS DETECTED] Target '$t' identified policy violations (Exit code: $exitCode)." -ForegroundColor Yellow
+        Write-Host "`n[VIOLATIONS DETECTED] Target '$t' identified policy violations (Exit code: $exitCode)." -ForegroundColor Red
+        $overallExitCode = $exitCode
     }
 }
 
 Write-Host "`nReports generated in ./reports/" -ForegroundColor Cyan
 
-if ($AIAssistant -or (Test-Path "./reports/results_json.json")) {
+if ($AIAssistant) {
     Write-Host "`n🤖 Launching AI DevSecOps Assistant Analysis..." -ForegroundColor Cyan
     & ".\scripts\ai_assistant.ps1"
+}
+
+if ($overallExitCode -ne 0 -and -not $SoftFail) {
+    Write-Host "`n[SECURITY GATE FAILED] Halting pipeline execution due to high/critical violations." -ForegroundColor Red
+    exit $overallExitCode
 }

@@ -2,9 +2,9 @@
 # Production Checkov Configuration File
 # Documentation: https://www.checkov.io/2.Basics/Configuring%20Checkov.html
 
-# Target directory to scan
-directory:
-  - ./terraform/remediated
+# Default target directory is passed via CLI flag -d / --directory
+# directory:
+#   - ./terraform/remediated
 
 # Frameworks to evaluate
 framework:
