@@ -57,7 +57,7 @@ jobs:
             --external-checks-dir ./custom_policies/python \\
             --framework terraform \\
             --output cli --output sarif --output json --output-file-path ./reports \\
-            --hard-fail-on HIGH --soft-fail false
+            --hard-fail-on HIGH
 
   # STAGE 2: Terraform Validation & Speculative Plan
   # Strictly depends on Stage 1 (needs: [security-gate])

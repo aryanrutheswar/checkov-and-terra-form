@@ -71,8 +71,7 @@ jobs:
             --output sarif \
             --output json \
             --output-file-path ./reports \
-            --hard-fail-on HIGH \
-            --soft-fail false
+            --hard-fail-on HIGH
 
       - name: Generate Security Gate Summary
         if: always()
